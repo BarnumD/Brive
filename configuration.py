@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import yaml
-
+from ruamel.yaml import YAML
+yaml=YAML(typ='safe')
 
 from backend import *
 
