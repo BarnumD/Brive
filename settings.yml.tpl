@@ -24,3 +24,5 @@ backend:
     # optional: compression format, is 'compression' is set to 'True'
     # must be either gz or bz2, defaults to gz
     compression_format: 'gz'
+    # optional: Create timestamped sub-folder in root_dir path for each run.
+    timestamp_subfolder: 'True'
