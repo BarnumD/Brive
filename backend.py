@@ -18,6 +18,9 @@ class BaseBackend(object):
         self._root_dir = configuration.Configuration.get(
             'backend_root_dir', not_null=True
         )
+        self._timestamp_subfolder = configuration.Configuration.get(
+            'backend_timestamp_subfolder', is_bool=True
+        )
         self._keep_dirs = keep_dirs
         self._session_name = self._generate_session_name()
         Log.verbose(u'Current session: {}'.format(self._session_name))
@@ -91,13 +94,19 @@ class SimpleBackend(BaseBackend):
 
     def __init__(self, keep_dirs):
         super(SimpleBackend, self).__init__(keep_dirs)
-        self._mkdir(self._session_name)
-        self._current_dir = os.path.join(self._root_dir, self._session_name)
+        if (self._timestamp_subfolder):
+          self._mkdir(self._session_name)
+          self._current_dir = os.path.join(self._root_dir, self._session_name)
+        else:
+            self._current_dir = os.path.join(self._root_dir)
         Log.debug('SimpleBackend loaded')
 
     def save(self, user, document):
         path = self._get_path(user, document)
-        self._mkdir(os.path.join(self._session_name, path))
+        if (self._timestamp_subfolder):
+          self._mkdir(os.path.join(self._session_name, path))
+        else:
+          self._mkdir(os.path.join(path))    
         prefix = os.path.join(self._current_dir, path)
         for document_content in document.contents:
             path = os.path.join(prefix, document_content.file_name)
