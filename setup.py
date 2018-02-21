@@ -32,7 +32,7 @@ setup(
         'pycparser==2.14',
         'pyOpenSSL==0.15.1',
         'python-dateutil==2.4.2',
-        'PyYAML==3.11',
+        'ruamel.yaml==0.15.35',
         'rsa==3.2',
         'simplejson==3.8.0',
         'six==1.9.0',
@@ -40,10 +40,6 @@ setup(
         'uritemplate==0.6',
         'wheel==0.26.0'
     ],
-
-    dependency_links = [
-        "http://pyyaml.org/download/pyyaml/PyYAML-3.11.tar.gz"
-    ]
 )
 
 # for some reason, the developer of streaming_httplib2 didn't include the certificates
