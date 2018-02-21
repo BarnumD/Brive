@@ -302,7 +302,12 @@ class Document(object):
     def title(self):
         # forbid os.sep in the name, and replace it with '_',
         # to prevent bugs when saving
-        return self.get_meta('title').replace(os.sep, '_')
+        title = self.get_meta('title').replace(os.sep, '_')
+        # Remove illegal characters from document title.
+        for illegalChar in ['/','~','#','&','*','\\','<','>','+','|','"','?',':']:
+          if illegalChar in title:
+            title=title.replace(illegalChar,'')
+        return title
 
     @property
     def is_owned(self):
