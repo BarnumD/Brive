@@ -76,7 +76,7 @@ class Credentials(object):
             Configuration.get('google_app_email', 'google_app_p12_file',
                               'google_app_p12_secret', 'google_api_scopes',
                               not_null=True)
-        stream = open(p12_file, 'r')
+        stream = open(p12_file, 'rb')
         self._p12 = stream.read()
         stream.close()
         # check our credentials are those of a valid app
