@@ -49,7 +49,11 @@ class BaseBackend(object):
         #  Join join path/filename and document id.
         path = path+'_'+document.id
         # We are missing document extension here, because it hasn't been decided/added to the document object. (There could be also multiple document extensions downloaded.)
-        
+
+        # Enable long file path support on windows.
+        if os.name == 'nt':
+            path = '\\\\?\\'+path
+
         if glob.glob(path+'*'):
             #There is already a file on the filesystem with that name/document id.
             #Is it older than what's online?
@@ -57,7 +61,7 @@ class BaseBackend(object):
 
             for filePath in glob.glob(path+'*'):
                 fileOnDiskModifiedDate = os.path.getmtime(filePath)
-
+                
                 # Compare if Google Doc modify time > file on disk modify time
                 if (datetime.strptime(document.modifiedDate, '%Y-%m-%dT%H:%M:%S') > datetime.fromtimestamp(fileOnDiskModifiedDate)):
                     return True
@@ -70,7 +74,13 @@ class BaseBackend(object):
     # equivalent to *nix's _mkdir -p
     def _mkdir(self, path=''):
         try:
-            os.makedirs(os.path.join(self._root_dir, path))
+            path = os.path.join(self._root_dir, path)
+
+            # Enable long file path support on windows.
+            if os.name == 'nt':
+                path = '\\\\?\\'+path
+
+            os.makedirs(path)
         except OSError as ex:
             if ex.errno != errno.EEXIST:
                 raise
@@ -78,6 +88,11 @@ class BaseBackend(object):
     # equivalent to *nix's rm -rf
     def _delete(self, name):
         path = os.path.join(self._root_dir, name)
+
+        # Enable long file path support on windows.
+        if os.name == 'nt':
+            path = '\\\\?\\'+path
+
         if os.path.isdir(path):
             shutil.rmtree(path)
         elif os.path.isfile(path):
@@ -141,11 +156,18 @@ class SimpleBackend(BaseBackend):
 
     def save(self, user, document):
         path = self._get_path(user, document)
+
         if (self._timestamp_subfolder):
           self._mkdir(os.path.join(self._session_name, path))
         else:
           self._mkdir(os.path.join(path))    
+        
         prefix = os.path.join(self._current_dir, path)
+
+        # Enable long file path support on windows.
+        if os.name == 'nt':
+            prefix = '\\\\?\\'+prefix
+
         for document_content in document.contents:
             path = os.path.join(prefix, document_content.file_name)
             Log.debug(u'Writing {}\'s {} to {}'.format(
@@ -159,7 +181,6 @@ class SimpleBackend(BaseBackend):
         Log.verbose(u'Unexpected shutdown, deleting {} folder'
                     .format(self._current_dir))
         self._delete(self._session_name)
-
 
     # returns None if the current name is not a backup dir
     # and the date for this backup if it is
