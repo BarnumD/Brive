@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+from datetime import datetime
 import errno
+import glob
 import time
 import tarfile
 import shutil
@@ -25,9 +27,45 @@ class BaseBackend(object):
         self._session_name = self._generate_session_name()
         Log.verbose(u'Current session: {}'.format(self._session_name))
 
+    def _get_path(self, user, document):
+        path = os.path.join(
+            user.login, document.path if self._keep_dirs else ''
+        )
+        return path
+
     # can be overriden for more elaborate backends
     def need_to_fetch_contents(self, user, document):
-        return True
+        # Check to see if we already have this document downloaded.  Skip if we do, and the copy online is not newer.
+        # First, get the would-be path of this document.
+        path = self._get_path(user, document)
+        if (self._timestamp_subfolder):
+          self._mkdir(os.path.join(self._session_name, path))
+        else:
+          self._mkdir(os.path.join(path))    
+        prefix = os.path.join(self._current_dir, path)
+        
+        #  Join path prefix with filename.
+        path = os.path.join(prefix, document.title)
+        #  Join join path/filename and document id.
+        path = path+'_'+document.id
+        # We are missing document extension here, because it hasn't been decided/added to the document object. (There could be also multiple document extensions downloaded.)
+        
+        if glob.glob(path+'*'):
+            #There is already a file on the filesystem with that name/document id.
+            #Is it older than what's online?
+            document.modifiedDate = document._meta.get("modifiedDate").split(".")[0]
+
+            for filePath in glob.glob(path+'*'):
+                fileOnDiskModifiedDate = os.path.getmtime(filePath)
+
+                # Compare if Google Doc modify time > file on disk modify time
+                if (datetime.strptime(document.modifiedDate, '%Y-%m-%dT%H:%M:%S') > datetime.fromtimestamp(fileOnDiskModifiedDate)):
+                    return True
+                else:
+                    return False
+        else:
+            return True
+
 
     # equivalent to *nix's _mkdir -p
     def _mkdir(self, path=''):
@@ -122,11 +160,6 @@ class SimpleBackend(BaseBackend):
                     .format(self._current_dir))
         self._delete(self._session_name)
 
-    def _get_path(self, user, document):
-        path = os.path.join(
-            user.login, document.path if self._keep_dirs else ''
-        )
-        return path
 
     # returns None if the current name is not a backup dir
     # and the date for this backup if it is
